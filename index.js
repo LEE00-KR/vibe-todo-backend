@@ -19,6 +19,15 @@ if (!process.env.MONGO_URL) {
 
 const MONGODB_URI = process.env.MONGO_URL || 'mongodb://localhost:27017/todo-backend';
 
+// MongoDB 연결 옵션
+const mongooseOptions = {
+  serverSelectionTimeoutMS: 5000, // 5초 타임아웃
+  socketTimeoutMS: 45000, // 소켓 타임아웃
+  connectTimeoutMS: 10000, // 연결 타임아웃
+  retryWrites: true,
+  w: 'majority'
+};
+
 // CORS 설정 - 개발 환경에서 모든 origin 허용
 app.use(cors({
   origin: '*',
@@ -70,16 +79,25 @@ const server = app.listen(PORT, async () => {
   try {
     // 이미 연결되어 있으면 재연결하지 않음
     if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(MONGODB_URI);
+      await mongoose.connect(MONGODB_URI, mongooseOptions);
+      console.log('✓ MongoDB 연결 성공');
     } else if (mongoose.connection.readyState === 1) {
-      console.log('연결 성공');
+      console.log('✓ MongoDB 이미 연결되어 있습니다.');
       console.log(`MongoDB 데이터베이스: ${mongoose.connection.name}`);
       console.log(`MongoDB 호스트: ${mongoose.connection.host}:${mongoose.connection.port}`);
     }
   } catch (error) {
-    console.error('MongoDB 연결 실패:', error.message);
+    console.error('❌ MongoDB 연결 실패:', error.message);
+    if (error.message.includes('IP whitelist') || error.message.includes('whitelist')) {
+      console.error('⚠️  IP 화이트리스트 문제입니다.');
+      console.error('   MongoDB Atlas에서 Cloudtype 서버의 IP 주소를 화이트리스트에 추가해야 합니다.');
+      console.error('   또는 Atlas에서 "Allow access from anywhere" (0.0.0.0/0)를 설정하세요.');
+    } else if (error.message.includes('SSL') || error.message.includes('TLS')) {
+      console.error('⚠️  SSL/TLS 연결 오류입니다.');
+      console.error('   MongoDB Atlas 연결 설정을 확인하세요.');
+    }
     console.warn('⚠️  서버는 실행 중이지만 MongoDB가 연결되지 않았습니다.');
-    console.warn('MongoDB가 실행 중인지 확인해주세요.');
+    console.warn('   데이터베이스 작업은 실패할 수 있습니다.');
   }
 });
 
