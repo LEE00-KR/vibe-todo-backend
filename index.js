@@ -90,8 +90,8 @@ mongoose.connection.on('disconnected', () => {
 });
 
 // 서버 시작
-const server = app.listen(PORT, async () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+const server = app.listen(PORT, '0.0.0.0', async () => {
+  console.log(`Server is running on http://0.0.0.0:${PORT}`);
   
   // MongoDB 연결 (서버는 MongoDB 연결과 관계없이 시작)
   try {
