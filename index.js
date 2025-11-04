@@ -56,6 +56,24 @@ app.get('/', (req, res) => {
   res.json({ message: 'Todo Backend API is running!' });
 });
 
+// 서버 IP 확인 엔드포인트 (MongoDB Atlas 화이트리스트용)
+app.get('/api/ip', (req, res) => {
+  const clientIp = req.headers['x-forwarded-for'] || 
+                   req.headers['x-real-ip'] || 
+                   req.connection.remoteAddress || 
+                   req.socket.remoteAddress ||
+                   (req.connection.socket ? req.connection.socket.remoteAddress : null);
+  
+  res.json({ 
+    message: 'MongoDB Atlas에 이 IP를 추가하세요',
+    ip: clientIp,
+    forwardedFor: req.headers['x-forwarded-for'],
+    realIp: req.headers['x-real-ip'],
+    connectionRemoteAddress: req.connection.remoteAddress,
+    note: '보통 x-forwarded-for 또는 x-real-ip 헤더의 값을 사용합니다'
+  });
+});
+
 // MongoDB 연결 이벤트 리스너
 mongoose.connection.on('connected', () => {
   console.log('연결 성공');
